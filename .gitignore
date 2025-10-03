@@ -1,0 +1,57 @@
+# ----------------------------
+# Python
+# ----------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+
+# pipenv / poetry
+Pipfile.lock
+poetry.lock
+
+# ----------------------------
+# Go
+# ----------------------------
+bin/
+pkg/
+*.exe
+*.test
+*.out
+
+# ----------------------------
+# Node / frontend (if any)
+# ----------------------------
+node_modules/
+dist/
+*.env
+.env.local
+.env.*.local
+
+# ----------------------------
+# IDE / Editor
+# ----------------------------
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ----------------------------
+# OS / System
+# ----------------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------------
+# Custom project files
+# ----------------------------
+# Ignore specific utils if needed
+utils/__pycache__/
+utils/CURLrequests.py
+utils/queries.py

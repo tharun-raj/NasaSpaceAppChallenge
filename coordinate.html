@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mars Map Viewer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100vw;
+            background: #1a0a00;
+        }
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 1000;
+            font-size: 13px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            min-width: 200px;
+        }
+        .info-panel h3 {
+            margin: 0 0 10px 0;
+            color: #ff6b35;
+            font-size: 16px;
+        }
+        .info-item {
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #ff9966;
+        }
+        .info-value {
+            color: #fff;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="info-panel">
+        <h3>🔴 Mars Explorer</h3>
+        <div class="info-item">
+            <span class="info-label">Zoom:</span>
+            <span class="info-value" id="zoom">1</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Lat:</span>
+            <span class="info-value" id="lat">0.00°</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Lon:</span>
+            <span class="info-value" id="lon">0.00°</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Tile (x,y):</span>
+            <span class="info-value" id="tile">-</span>
+        </div>
+        <hr style="border: 1px solid #ff9966; margin: 10px 0;">
+        <div class="info-item">
+            <span class="info-label">Mouse Lat:</span>
+            <span class="info-value" id="mouseLat">-</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Mouse Lon:</span>
+            <span class="info-value" id="mouseLon">-</span>
+        </div>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Custom CRS for Mars 2:1 equirectangular projection
+        const MarsCRS = L.extend({}, L.CRS.Simple, {
+            projection: L.Projection.LonLat,
+            transformation: new L.Transformation(1, 0, -1, 0),
+            
+            scale: function(zoom) {
+                return Math.pow(2, zoom);
+            },
+            
+            zoom: function(scale) {
+                return Math.log(scale) / Math.LN2;
+            },
+            
+            distance: function(latlng1, latlng2) {
+                const dx = latlng2.lng - latlng1.lng;
+                const dy = latlng2.lat - latlng1.lat;
+                return Math.sqrt(dx * dx + dy * dy);
+            },
+            
+            infinite: false
+        });
+
+        // Initialize map
+        const map = L.map('map', {
+            crs: L.CRS.EPSG4326,  // Standard lat/lon projection
+            center: [0, 0],
+            zoom: 1,
+            minZoom: 0,
+            maxZoom: 8,
+            worldCopyJump: false,
+            maxBounds: [[-90, -180], [90, 180]],
+            maxBoundsViscosity: 1.0
+        });
+
+        // Add Mars tile layer
+        const tileLayer = L.tileLayer('http://localhost:8000/api/tiles/global/{z}/{x}/{y}.jpg', {
+            tms: false,  // NASA uses standard XYZ
+            attribution: 'NASA Mars Viking MDIM21',
+            noWrap: true,
+            bounds: [[-90, -180], [90, 180]],
+            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+        }).addTo(map);
+
+        // Update info panel
+        function updateInfo() {
+            const center = map.getCenter();
+            const zoom = map.getZoom();
+            
+            document.getElementById('zoom').textContent = zoom;
+            document.getElementById('lat').textContent = center.lat.toFixed(2) + '°';
+            document.getElementById('lon').textContent = center.lng.toFixed(2) + '°';
+            
+            // Calculate current tile at center
+            const scale = Math.pow(2, zoom);
+            const worldTiles = scale * 2;  // 2:1 ratio
+            
+            const x = Math.floor((center.lng + 180) / 360 * worldTiles);
+            const y = Math.floor((90 - center.lat) / 180 * scale);
+            
+            document.getElementById('tile').textContent = `${x}, ${y}`;
+        }
+
+        map.on('moveend', updateInfo);
+        map.on('zoomend', updateInfo);
+        updateInfo();
+
+        // Track mouse position
+        map.on('mousemove', function(e) {
+            const lat = e.latlng.lat;
+            const lon = e.latlng.lng;
+            
+            document.getElementById('mouseLat').textContent = lat.toFixed(4) + '°';
+            document.getElementById('mouseLon').textContent = lon.toFixed(4) + '°';
+        });
+
+        // Clear mouse coordinates when mouse leaves map
+        map.on('mouseout', function() {
+            document.getElementById('mouseLat').textContent = '-';
+            document.getElementById('mouseLon').textContent = '-';
+        });
+
+        // Debug logging
+        tileLayer.on('tileloadstart', function(e) {
+            console.log('📡 Loading tile:', `${e.coords.z}/${e.coords.x}/${e.coords.y}`);
+        });
+
+        tileLayer.on('tileerror', function(e) {
+            console.error('❌ Tile error:', `${e.coords.z}/${e.coords.x}/${e.coords.y}`);
+        });
+
+        tileLayer.on('tileload', function(e) {
+            console.log('✅ Tile loaded:', `${e.coords.z}/${e.coords.x}/${e.coords.y}`);
+        });
+
+        // Log initial state
+        console.log('🚀 Mars Map Viewer initialized');
+        console.log('Starting at zoom', map.getZoom(), 'centered at', map.getCenter());
+    </script>
+</body>
+</html>
