@@ -6,6 +6,10 @@ from fastapi.responses import FileResponse, RedirectResponse
 # python -m uvicorn mars_api:app --reload --host 0.0.0.0 --port 8000
 app = FastAPI()
 
+NASA_TITLE_URL = {
+    "viking": "http://s3-eu-west-1.amazonaws.com/whereonmars.cartodb.net/celestia_mars-shaded-16k_global/{z}/{x}/{y}.png",
+}
+
 @app.get("/api/health")
 async def health_check():
     """Server health check"""
