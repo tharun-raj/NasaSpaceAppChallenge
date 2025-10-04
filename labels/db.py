@@ -1,12 +1,13 @@
 import psycopg2
 import json
+import os
 
 DB_CONFIG = {
-    "dbname": "nasa_app_b54n",
-    "user": "nasa_app_b54n_user",
-    "password": "jRQUjCkRe9MOdUmZngLSe6RalDEVdosT",
-    "host": "dpg-d3go2j63jp1c73eum0bg-a",
-    "port": "5432"
+    "dbname": os.environ.get("DB_NAME"),
+    "user": os.environ.get("DB_USER"),
+    "password": os.environ.get("DB_PASSWORD"),
+    "host": os.environ.get("DB_HOST"),
+    "port": os.environ.get("DB_PORT", 5432)
 }
 
 def create_table():
