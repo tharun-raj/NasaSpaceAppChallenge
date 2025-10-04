@@ -28,6 +28,6 @@ async def get_tile_global(dataset: str, z: int, x: int, y: int):
         print(f"[{now}] ✓ Served local tile: {tile_path}")
         return FileResponse(tile_path, media_type="image/jpeg")
     
-    nasa_url = get_nasa_tile_url(z, x, y)
+    nasa_url = get_nasa_tile_url(dataset, z, x, y)
     print(f"[{now}] ↗ Redirecting to NASA: {nasa_url}")
     return RedirectResponse(nasa_url, status_code=302)
