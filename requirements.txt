@@ -24,3 +24,5 @@ cachetools==5.3.2
 # Image processing (if you want to process tiles)
 # Pillow==10.1.0
 # numpy==1.26.2
+
+psycopg2-binary
