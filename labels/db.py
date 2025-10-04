@@ -3,9 +3,9 @@ import json
 
 DB_CONFIG = {
     "dbname": "nasa_app",
-    "user": "nasa_user",
-    "password": "Root123",
-    "host": "localhost",
+    "user": "nasa_app_b54n_user",
+    "password": "jRQUjCkRe9MOdUmZngLSe6RalDEVdosT",
+    "host": "dpg-d3go2j63jp1c73eum0bg-a",
     "port": "5432"
 }
 
@@ -75,8 +75,6 @@ def get_coordinates(user_id: int,id: int,title: str,celestial_object: str):
         results = []
         
         for row in rows:
-            print("Row:", row, flush=True)
-            print("Length:", len(row), flush=True)
             results.append({
                 "id" : row[0],
                 "user_id": row[1],
@@ -101,7 +99,17 @@ def delete_coordinates(id: int,user_id: int,celestial_object: str):
         conn = psycopg2.connect(**DB_CONFIG)
         cur = conn.cursor()
 
-        cur.execute("DELETE FROM public.labels WHERE id = %s AND user_id = %s AND celestial_object = %s",(id,user_id,celestial_object))
+        query = "DELETE FROM public.labels WHERE id = %s "
+        values = [id]
+
+        if user_id is not None:
+            query += "AND user_id = %s "
+            values.append(user_id)
+        if celestial_object is not None:
+            query += "AND celestial_object = %s"
+            values.append(celestial_object)
+
+        cur.execute(query,tuple(values))
         conn.commit()
     
         return cur.rowcount > 0
@@ -147,7 +155,6 @@ def update_coordinates(label_id: int, title: str, description: str):
         return cur.rowcount > 0
 
     except Exception as e:
-        print("❌ SQL Error in update_coordinates:", e, flush=True)
         raise e
     finally:
         cur.close()
