@@ -3,6 +3,7 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse
 
+# python -m uvicorn mars_api:app --reload --host 0.0.0.0 --port 8000
 app = FastAPI()
 
 @app.get("/api/health")
