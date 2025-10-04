@@ -2,7 +2,7 @@ import psycopg2
 import json
 
 DB_CONFIG = {
-    "dbname": "nasa_app",
+    "dbname": "nasa_app_b54n",
     "user": "nasa_app_b54n_user",
     "password": "jRQUjCkRe9MOdUmZngLSe6RalDEVdosT",
     "host": "dpg-d3go2j63jp1c73eum0bg-a",
