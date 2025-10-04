@@ -44,8 +44,8 @@ def get_labels(
 @router.post("/delete-labels/id/{id}")
 def delete_labels(
     id: Optional[int] = Path(...,description="label id",),
-    user_id: Optional[int] = Query(..., description="User ID"),
-    celestial_object: Optional[str] = Query(..., description="Celestial object name")
+    user_id: Optional[int] = Query(None, description="User ID"),
+    celestial_object: Optional[str] = Query(None, description="Celestial object name")
 ):
     try:
         result=delete_coordinates(id,user_id, celestial_object)
@@ -56,18 +56,19 @@ def delete_labels(
         raise HTTPException(status_code=500, detail=str(e))
     
 @router.post("/update-labels/id/{id}")
-def delete_labels(
-    id: Optional[int] = Path(...,description="label id",),
-    user_id: Optional[int] = Query(..., description="User ID"),
-    celestial_object: Optional[str] = Query(..., description="Celestial object name"),
-    title: Optional[str] = Query(..., description="title of the label"),
-    description: Optional[str] = Query(..., description="label description")
+def update_labels(
+    id: int = Path(..., description="Label ID"),
+    # user_id: Optional[int] = Query(None, description="User ID"),
+    # celestial_object: Optional[str] = Query(None, description="Celestial object name"),
+    title: Optional[str] = Query(None, description="Title of the label"),
+    description: Optional[str] = Query(None, description="Label description")
 ):
     try:
-        result= update_coordinates(id,user_id, celestial_object,title,description)
+        result = update_coordinates(id, title, description)
         if result:
             return {"message": "Label updated successfully."}
+        else:
+            raise HTTPException(status_code=404, detail="Label not found or nothing to update.")
     except Exception as e:
-        print("❌ ERROR during update_coordinates:", e) 
         raise HTTPException(status_code=500, detail=str(e))
 
