@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from db import register_user, authenticate_user
+from db import register_user, authenticate_user, get_user_details
 
 router = APIRouter()
 
@@ -31,3 +31,14 @@ def login(data: LoginInput):
             raise HTTPException(status_code=401, detail="Invalid credentials")
     except Exception as e:
         raise HTTPException(status_code=500, detail="Login error")
+
+@router.get("/user_id/{user_id}")
+def get_user(user_id: int):
+    try:
+        user = get_user_details(user_id)
+        if user:
+            return user
+        else:
+            raise HTTPException(status_code=404, detail="User not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to fetch user details")

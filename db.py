@@ -334,3 +334,31 @@ def authenticate_user(username: str, password: str) -> int | None:
     finally:
         cur.close()
         conn.close()
+
+def get_user_details(user_id: int):
+    try:
+        conn = psycopg2.connect(**DB_CONFIG)
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT id, username, email, created_at
+            FROM users
+            WHERE id = %s
+        """, (user_id,))
+        user = cur.fetchone()
+
+        if user:
+            return {
+                "id": user[0],
+                "username": user[1],
+                "email": user[2],
+                "created_at": user[3]
+            }
+        else:
+            return None
+
+    except Exception as e:
+        print("❌ Error fetching user details:", e)
+        raise
+    finally:
+        cur.close()
+        conn.close()
