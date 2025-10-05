@@ -1,22 +1,22 @@
 # Web framework
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
+fastapi
+uvicorn[standard]
 
 # HTTP client for fetching tiles
-httpx==0.25.1
+httpx
 
 # Caching
-cachetools==5.3.2
+cachetools
 
 # Database Libraries
-psycopg2-binary==2.9.5
-asyncpg==0.27.0  # For async PostgreSQL connection
+psycopg2-binary
+asyncpg
 
 # Authentication
-bcrypt==4.0.1
+bcrypt
 
 # Redis
-redis==4.5.5
+redis
 
 # Generative AI
 google-generativeai
@@ -25,7 +25,7 @@ google-generativeai
 Pillow
 
 # Environment Management
-python-dotenv==1.0.0
+python-dotenv
 
 # Data Validation
 pydantic
