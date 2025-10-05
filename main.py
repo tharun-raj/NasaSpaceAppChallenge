@@ -5,6 +5,11 @@ from redis import RedisError
 from planets.routes.mars import router as planets_router
 from ai.routes.gemeni import router as gemeni_router
 from planets.config.redis_config import r, test_redis_connection
+from labels import labels
+from forum.forum import router as forum_router
+from user.user import router as user_router
+from db import create_table
+from fastapi.middleware.cors import CORSMiddleware
 
 
 @asynccontextmanager
@@ -28,6 +33,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Mars Tiles API", lifespan=lifespan)
 app.include_router(planets_router, prefix="/api")
 app.include_router(gemeni_router, prefix="/api")
+app.include_router(labels.router, prefix="/labels", tags=["Labels"])
+app.include_router(health_router)
+app.include_router(forum_router, prefix="/forum")
+app.include_router(user_router, prefix="/user")
+
 
 app.add_middleware(
     CORSMiddleware,
