@@ -29,7 +29,6 @@ psycopg2-binary
 bcrypt
 redis
 Pillow
-PIL
 dotenv
 google
 httpx
