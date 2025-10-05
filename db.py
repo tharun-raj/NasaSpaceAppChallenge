@@ -4,11 +4,11 @@ import json
 import os
 
 DB_CONFIG = {
-    "dbname": "nasa_app",
-    "user": "nasa_user",
-    "password": "Root123",
-    "host": "localhost",
-    "port": "5432"
+    "dbname": os.environ.get("DB_NAME"),
+    "user": os.environ.get("DB_USER"),
+    "password": os.environ.get("DB_PASSWORD"),
+    "host": os.environ.get("DB_HOST"),
+    "port": os.environ.get("DB_PORT", 5432)
 }
 
 def create_table():
@@ -78,7 +78,7 @@ def insert_coordinates(user_id: int, celestial_object: str, title: str, descript
         conn = psycopg2.connect(**DB_CONFIG)
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO public.labels (user_id, celestial_object, title, description, coordinates) VALUES (%s, %s, %s, %s, %s)",
+            "INSERT INTO labels (user_id, celestial_object, title, description, coordinates) VALUES (%s, %s, %s, %s, %s)",
             (user_id, celestial_object, title, description, json.dumps(coordinates))
         )
         conn.commit()
@@ -96,7 +96,7 @@ def get_coordinates(user_id: int,id: int,title: str,celestial_object: str):
         conn = psycopg2.connect(**DB_CONFIG)
         cur = conn.cursor()
 
-        query = "SELECT id, user_id, celestial_object, title, description, coordinates, created_at,updated_at FROM public.labels WHERE user_id = %s"
+        query = "SELECT id, user_id, celestial_object, title, description, coordinates, created_at,updated_at FROM labels WHERE user_id = %s"
         values = [user_id]
 
         if id is not None:
@@ -139,7 +139,7 @@ def delete_coordinates(id: int,user_id: int,celestial_object: str):
         conn = psycopg2.connect(**DB_CONFIG)
         cur = conn.cursor()
 
-        query = "DELETE FROM public.labels WHERE id = %s "
+        query = "DELETE FROM labels WHERE id = %s "
         values = [id]
 
         if user_id is not None:
@@ -184,7 +184,7 @@ def update_coordinates(label_id: int, title: str, description: str):
         values.extend([label_id])
 
         query = f"""
-            UPDATE public.labels
+            UPDATE labels
             SET {', '.join(updates)}
             WHERE id = %s
         """
