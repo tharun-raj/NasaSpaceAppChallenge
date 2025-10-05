@@ -2,183 +2,1517 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mars Map Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mars Collaborative Explorer</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
+            box-sizing: border-box;
         }
+        
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+        }
+        
         #map {
-            height: 100vh;
-            width: 100vw;
-            background: #1a0a00;
-        }
-        .info-panel {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            color: #fff;
-            padding: 15px;
-            border-radius: 8px;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            filter: brightness(0.95);
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .top-bar {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
             z-index: 1000;
-            font-size: 13px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-            min-width: 200px;
-        }
-        .info-panel h3 {
-            margin: 0 0 10px 0;
-            color: #ff6b35;
-            font-size: 16px;
-        }
-        .info-item {
-            margin: 5px 0;
             display: flex;
-            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+            padding: 12px 20px;
+            border-radius: 50px;
         }
+        
+        .search-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 15px;
+        }
+        
+        .search-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            width: 280px;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .search-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #ff6b35;
+            width: 320px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn.active {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            animation: pulse 2s infinite;
+        }
+        
+        .btn-forum {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        
+        .btn-measure {
+            background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        }
+
+        .btn-label {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+
+        .btn-toggle {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .btn-toggle.toggled {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(245, 87, 108, 0.7); }
+            50% { box-shadow: 0 0 0 15px rgba(245, 87, 108, 0); }
+        }
+
+        /* Cancel Button */
+        .cancel-btn {
+            position: fixed;
+            top: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            background: rgba(239, 68, 68, 0.95);
+            backdrop-filter: blur(20px);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 32px rgba(239, 68, 68, 0.4);
+            animation: slideDown 0.3s ease;
+        }
+
+        .cancel-btn.show {
+            display: flex;
+        }
+
+        .cancel-btn:hover {
+            background: rgba(220, 38, 38, 0.95);
+            transform: translateX(-50%) translateY(-2px);
+        }
+
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        
+        .side-panel {
+            position: absolute;
+            top: 90px;
+            right: 15px;
+            width: 320px;
+            max-height: calc(100vh - 110px);
+            overflow-y: auto;
+            z-index: 1000;
+            padding: 20px;
+            border-radius: 20px;
+            transition: all 0.3s;
+        }
+        
+        .side-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .side-panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        .side-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        
+        .side-panel h3 {
+            color: #fff;
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .info-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
         .info-label {
-            font-weight: bold;
-            color: #ff9966;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
         }
+        
         .info-value {
             color: #fff;
-            font-family: monospace;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            margin: 15px 0;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-overlay.show {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal {
+            background: rgba(20, 20, 40, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal h3 {
+            color: #fff;
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        
+        .color-picker {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+        }
+        
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-option.selected {
+            border-color: white;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+        }
+        
+        .modal-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .modal-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .modal-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .modal-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .modal-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .question-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .question-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        .question-text {
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        
+        .answer-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .answer {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .answer-input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+        
+        .answer-btn {
+            margin-top: 8px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .answer-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .distance-display {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20, 20, 40, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 15px 25px;
+            border-radius: 50px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .distance-display.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+        
+        .distance-text {
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .distance-value {
+            color: #30cfd0;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+        }
+        
+        .status-message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20, 20, 40, 0.95);
+            backdrop-filter: blur(20px);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 50px;
+            z-index: 3000;
+            display: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .status-message.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+        
+        .status-message.success {
+            background: linear-gradient(135deg, rgba(52, 211, 153, 0.95), rgba(16, 185, 129, 0.95));
+        }
+        
+        .status-message.error {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95));
+        }
+        
+        @media (max-width: 768px) {
+            .top-bar {
+                flex-direction: column;
+                width: calc(100% - 30px);
+                padding: 15px;
+            }
+            
+            .search-input {
+                width: 100%;
+            }
+            
+            .search-input:focus {
+                width: 100%;
+            }
+            
+            .side-panel {
+                width: calc(100% - 30px);
+                max-height: 40vh;
+            }
+            
+            .modal {
+                width: calc(100% - 30px);
+                padding: 20px;
+            }
+        }
+        
+        .leaflet-popup-content-wrapper {
+            background: rgba(20, 20, 40, 0.95);
+            backdrop-filter: blur(20px);
+            color: white;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+        
+        .leaflet-popup-tip {
+            background: rgba(20, 20, 40, 0.95);
+        }
+        
+        .leaflet-control-zoom {
+            border: none !important;
+            border-radius: 50px !important;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
+            backdrop-filter: blur(20px);
+        }
+        
+        .leaflet-control-zoom a {
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(10px);
+            color: white !important;
+            border: none !important;
+            width: 40px !important;
+            height: 40px !important;
+            line-height: 40px !important;
+        }
+        
+        .leaflet-control-zoom a:hover {
+            background: rgba(102, 126, 234, 0.5) !important;
+        }
+
+        /* Custom Drawing Styles */
+        .leaflet-draw-tooltip {
+            background: rgba(20, 20, 40, 0.95) !important;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: white !important;
+            border-radius: 12px !important;
+            padding: 8px 12px !important;
+            font-size: 13px !important;
+        }
+
+        .leaflet-draw-tooltip:before {
+            border-right-color: rgba(20, 20, 40, 0.95) !important;
+        }
+
+        /* Make drawing markers circular */
+        .leaflet-marker-icon.leaflet-div-icon {
+            background: white !important;
+            border: 3px solid #667eea !important;
+            border-radius: 50% !important;
+            width: 12px !important;
+            height: 12px !important;
+            margin-left: -6px !important;
+            margin-top: -6px !important;
+        }
+
+        .leaflet-vertex-icon {
+            background: white !important;
+            border: 3px solid #667eea !important;
+            border-radius: 50% !important;
+            width: 12px !important;
+            height: 12px !important;
+        }
+
+        .leaflet-middle-icon {
+            background: rgba(102, 126, 234, 0.5) !important;
+            border: 2px solid white !important;
+            border-radius: 50% !important;
+            width: 8px !important;
+            height: 8px !important;
+        }
+
+        /* Expandable Question Panel */
+        .question-panel {
+            position: fixed;
+            right: -450px;
+            top: 0;
+            width: 450px;
+            height: 100vh;
+            background: rgba(20, 20, 40, 0.98);
+            backdrop-filter: blur(30px);
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 2500;
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -10px 0 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .question-panel.open {
+            right: 0;
+        }
+
+        .panel-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-header h2 {
+            color: white;
+            font-size: 20px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+
+        .panel-close:hover {
+            background: rgba(239, 68, 68, 0.8);
+            transform: rotate(90deg);
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 25px;
+        }
+
+        .panel-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .panel-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .panel-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        .question-detail {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .question-detail h3 {
+            color: white;
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .question-meta {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 20px;
+        }
+
+        .answers-list {
+            margin-top: 20px;
+        }
+
+        .answer-item {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border-left: 3px solid #667eea;
+        }
+
+        .answer-item-text {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .answer-form {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .answer-form textarea {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .answer-form button {
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .hidden-layer {
+            opacity: 0.2 !important;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
     <div id="map"></div>
-    <div class="info-panel">
+    
+    <div class="top-bar glass">
+        <div class="search-container">
+            <span style="color: white; font-size: 18px;">🔍</span>
+            <input type="text" class="search-input" id="coordSearch" placeholder="Enter coordinates: lat, lon (e.g., -14.5, 175.4)" />
+        </div>
+        <button class="btn btn-toggle" id="toggleForumBtn">
+            <span>👁️</span>
+            <span>Toggle Q&A</span>
+        </button>
+        <button class="btn btn-forum" id="forumBtn">
+            <span>💬</span>
+            <span>Ask Question</span>
+        </button>
+        <button class="btn btn-measure" id="measureBtn">
+            <span>📏</span>
+            <span>Measure</span>
+        </button>
+        <button class="btn btn-label" id="labelBtn">
+            <span>🏷️</span>
+            <span>Add Label</span>
+        </button>
+        <button class="btn" id="clearBtn" style="background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); display: none;">
+            <span>🗑️</span>
+            <span>Clear Search</span>
+        </button>
+    </div>
+
+    <button class="cancel-btn" id="cancelDrawBtn">
+        <span>✕</span>
+        <span>Cancel Drawing</span>
+    </button>
+    
+    <div class="side-panel glass">
         <h3>🔴 Mars Explorer</h3>
-        <div class="info-item">
-            <span class="info-label">Zoom:</span>
-            <span class="info-value" id="zoom">1</span>
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-label">Zoom</div>
+                <div class="info-value" id="zoom">2</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Latitude</div>
+                <div class="info-value" id="lat">0.00°</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Longitude</div>
+                <div class="info-value" id="lon">0.00°</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Questions</div>
+                <div class="info-value" id="questionCount">0</div>
+            </div>
         </div>
-        <div class="info-item">
-            <span class="info-label">Lat:</span>
-            <span class="info-value" id="lat">0.00°</span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Lon:</span>
-            <span class="info-value" id="lon">0.00°</span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Tile (x,y):</span>
-            <span class="info-value" id="tile">-</span>
-        </div>
-        <hr style="border: 1px solid #ff9966; margin: 10px 0;">
-        <div class="info-item">
-            <span class="info-label">Mouse Lat:</span>
-            <span class="info-value" id="mouseLat">-</span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Mouse Lon:</span>
-            <span class="info-value" id="mouseLon">-</span>
+        <div class="divider"></div>
+        <div class="info-card" style="grid-column: 1 / -1;">
+            <div class="info-label">Mouse Position</div>
+            <div class="info-value" id="mousePos" style="font-size: 14px;">-</div>
         </div>
     </div>
     
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        // Custom CRS for Mars 2:1 equirectangular projection
-        const MarsCRS = L.extend({}, L.CRS.Simple, {
-            projection: L.Projection.LonLat,
-            transformation: new L.Transformation(1, 0, -1, 0),
-            
-            scale: function(zoom) {
-                return Math.pow(2, zoom);
-            },
-            
-            zoom: function(scale) {
-                return Math.log(scale) / Math.LN2;
-            },
-            
-            distance: function(latlng1, latlng2) {
-                const dx = latlng2.lng - latlng1.lng;
-                const dy = latlng2.lat - latlng1.lat;
-                return Math.sqrt(dx * dx + dy * dy);
-            },
-            
-            infinite: false
-        });
+    <div class="modal-overlay" id="forumModal">
+        <div class="modal">
+            <h3>📍 Ask a Question</h3>
+            <div class="form-group">
+                <label>Your Question</label>
+                <textarea id="questionInput" placeholder="What would you like to know about this area?"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Highlight Color</label>
+                <div class="color-picker">
+                    <div class="color-option selected" data-color="#ff6b6b" style="background: #ff6b6b;"></div>
+                    <div class="color-option" data-color="#4ecdc4" style="background: #4ecdc4;"></div>
+                    <div class="color-option" data-color="#45b7d1" style="background: #45b7d1;"></div>
+                    <div class="color-option" data-color="#f9ca24" style="background: #f9ca24;"></div>
+                    <div class="color-option" data-color="#6c5ce7" style="background: #6c5ce7;"></div>
+                    <div class="color-option" data-color="#fd79a8" style="background: #fd79a8;"></div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn primary" id="submitQuestion">Post Question</button>
+                <button class="modal-btn secondary" id="cancelQuestion">Cancel</button>
+            </div>
+        </div>
+    </div>
 
-        // Initialize map
+    <div class="modal-overlay" id="labelModal">
+        <div class="modal">
+            <h3>🏷️ Add Label</h3>
+            <div class="form-group">
+                <label>Label Text</label>
+                <input type="text" id="labelInput" placeholder="Enter label name (e.g., Olympus Mons)" />
+            </div>
+            <div class="form-group">
+                <label>Label Color</label>
+                <div class="color-picker">
+                    <div class="color-option selected" data-color-label="#ff6b6b" style="background: #ff6b6b;"></div>
+                    <div class="color-option" data-color-label="#4ecdc4" style="background: #4ecdc4;"></div>
+                    <div class="color-option" data-color-label="#45b7d1" style="background: #45b7d1;"></div>
+                    <div class="color-option" data-color-label="#f9ca24" style="background: #f9ca24;"></div>
+                    <div class="color-option" data-color-label="#6c5ce7" style="background: #6c5ce7;"></div>
+                    <div class="color-option" data-color-label="#fd79a8" style="background: #fd79a8;"></div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn primary" id="submitLabel">Add Label</button>
+                <button class="modal-btn secondary" id="cancelLabel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expandable Question Panel -->
+    <div class="question-panel" id="questionPanel">
+        <div class="panel-header">
+            <h2>❓ Question Details</h2>
+            <button class="panel-close" id="closePanel">✕</button>
+        </div>
+        <div class="panel-content" id="panelContent">
+            <p style="color: rgba(255,255,255,0.5); text-align: center; margin-top: 50px;">Click on a question to view details</p>
+        </div>
+    </div>
+    
+    <div class="distance-display" id="distanceDisplay">
+        <div class="distance-text">
+            <span>📏 Distance:</span>
+            <span class="distance-value" id="distanceValue">0 km</span>
+        </div>
+    </div>
+    
+    <div class="status-message" id="statusMessage"></div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000';
+        
         const map = L.map('map', {
-            crs: L.CRS.EPSG4326,  // Standard lat/lon projection
+            crs: L.CRS.EPSG4326,
             center: [0, 0],
-            zoom: 1,
-            minZoom: 0,
-            maxZoom: 8,
+            zoom: 2,
+            minZoom: 1,
+            maxZoom: 7,
+            zoomSnap: 0.25,
+            zoomDelta: 0.5,
+            wheelPxPerZoomLevel: 120,
+            zoomAnimation: true,
+            fadeAnimation: true,
             worldCopyJump: false,
             maxBounds: [[-90, -180], [90, 180]],
             maxBoundsViscosity: 1.0
         });
 
-        // Add Mars tile layer
-        const tileLayer = L.tileLayer('http://localhost:8000/api/tiles/global/{z}/{x}/{y}.jpg', {
-            tms: false,  // NASA uses standard XYZ
-            attribution: 'NASA Mars Viking MDIM21',
+        const tileLayer = L.tileLayer(`${API_BASE_URL}/api/tiles/global/{z}/{x}/{y}.jpg`, {
+            tms: false,
+            attribution: '© NASA Mars Viking MDIM21',
             noWrap: true,
             bounds: [[-90, -180], [90, 180]],
-            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+            updateWhenIdle: false,
+            updateWhenZooming: true,
+            keepBuffer: 4
         }).addTo(map);
 
-        // Update info panel
+        const questionLayer = new L.FeatureGroup();
+        const labelLayer = new L.FeatureGroup();
+        const searchMarkersLayer = new L.FeatureGroup();
+        map.addLayer(questionLayer);
+        map.addLayer(labelLayer);
+        map.addLayer(searchMarkersLayer);
+        
+        let questionCount = 0;
+        let selectedColor = '#ff6b6b';
+        let selectedLabelColor = '#ff6b6b';
+        let currentShape = null;
+        let isDrawingQuestion = false;
+        let isDrawingLabel = false;
+        let isMeasuring = false;
+        let measureLine = null;
+        let questions = {};
+        let currentDrawHandler = null;
+        let isNavigating = false;
+        let forumLayersVisible = true;
+        let currentExpandedQuestion = null;
+
         function updateInfo() {
             const center = map.getCenter();
-            const zoom = map.getZoom();
-            
-            document.getElementById('zoom').textContent = zoom;
+            document.getElementById('zoom').textContent = map.getZoom().toFixed(2);
             document.getElementById('lat').textContent = center.lat.toFixed(2) + '°';
             document.getElementById('lon').textContent = center.lng.toFixed(2) + '°';
-            
-            // Calculate current tile at center
-            const scale = Math.pow(2, zoom);
-            const worldTiles = scale * 2;  // 2:1 ratio
-            
-            const x = Math.floor((center.lng + 180) / 360 * worldTiles);
-            const y = Math.floor((90 - center.lat) / 180 * scale);
-            
-            document.getElementById('tile').textContent = `${x}, ${y}`;
         }
 
-        map.on('moveend', updateInfo);
-        map.on('zoomend', updateInfo);
+        map.on('move', updateInfo);
+        map.on('zoom', updateInfo);
         updateInfo();
 
-        // Track mouse position
         map.on('mousemove', function(e) {
-            const lat = e.latlng.lat;
-            const lon = e.latlng.lng;
+            document.getElementById('mousePos').textContent = 
+                `${e.latlng.lat.toFixed(4)}°, ${e.latlng.lng.toFixed(4)}°`;
+        });
+
+        function showStatus(message, type = 'success') {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = `status-message show ${type}`;
+            setTimeout(() => statusEl.classList.remove('show'), 3000);
+        }
+
+        function cancelCurrentDrawing() {
+            if (currentDrawHandler) {
+                currentDrawHandler.disable();
+                currentDrawHandler = null;
+            }
             
-            document.getElementById('mouseLat').textContent = lat.toFixed(4) + '°';
-            document.getElementById('mouseLon').textContent = lon.toFixed(4) + '°';
+            isDrawingQuestion = false;
+            isDrawingLabel = false;
+            isMeasuring = false;
+            
+            document.getElementById('forumBtn').classList.remove('active');
+            document.getElementById('measureBtn').classList.remove('active');
+            document.getElementById('measureBtn').innerHTML = '<span>📏</span><span>Measure</span>';
+            document.getElementById('labelBtn').classList.remove('active');
+            document.getElementById('cancelDrawBtn').classList.remove('show');
+            document.getElementById('distanceDisplay').classList.remove('show');
+            
+            if (measureLine) {
+                map.removeLayer(measureLine);
+                measureLine = null;
+            }
+        }
+
+        document.getElementById('cancelDrawBtn').addEventListener('click', cancelCurrentDrawing);
+
+        // Clear all search markers
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            searchMarkersLayer.clearLayers();
+            this.style.display = 'none';
+            showStatus('🗑️ Search locations cleared', 'success');
         });
 
-        // Clear mouse coordinates when mouse leaves map
-        map.on('mouseout', function() {
-            document.getElementById('mouseLat').textContent = '-';
-            document.getElementById('mouseLon').textContent = '-';
+        // Toggle forum visibility
+        document.getElementById('toggleForumBtn').addEventListener('click', function() {
+            forumLayersVisible = !forumLayersVisible;
+            
+            if (forumLayersVisible) {
+                questionLayer.eachLayer(layer => layer.setStyle({ opacity: 1, fillOpacity: 0.3 }));
+                this.classList.remove('toggled');
+                this.innerHTML = '<span>👁️</span><span>Toggle Q&A</span>';
+                showStatus('👁️ Questions visible', 'success');
+            } else {
+                questionLayer.eachLayer(layer => layer.setStyle({ opacity: 0, fillOpacity: 0 }));
+                this.classList.add('toggled');
+                this.innerHTML = '<span>👁️‍🗨️</span><span>Q&A Hidden</span>';
+                showStatus('🙈 Questions hidden', 'success');
+            }
         });
 
-        // Debug logging
-        tileLayer.on('tileloadstart', function(e) {
-            console.log('📡 Loading tile:', `${e.coords.z}/${e.coords.x}/${e.coords.y}`);
+        // Close question panel
+        document.getElementById('closePanel').addEventListener('click', function() {
+            document.getElementById('questionPanel').classList.remove('open');
         });
 
-        tileLayer.on('tileerror', function(e) {
-            console.error('❌ Tile error:', `${e.coords.z}/${e.coords.x}/${e.coords.y}`);
+        // Pre-fetch tiles for smoother navigation
+        async function prefetchTiles(lat, lon, zoom) {
+            const tilesToFetch = [];
+            const tileCoords = getTileCoordinates(lat, lon, zoom);
+            
+            // Fetch surrounding tiles
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    const x = tileCoords.x + dx;
+                    const y = tileCoords.y + dy;
+                    const url = `${API_BASE_URL}/api/tiles/global/${zoom}/${x}/${y}.jpg`;
+                    tilesToFetch.push(fetch(url));
+                }
+            }
+            
+            try {
+                await Promise.all(tilesToFetch);
+            } catch (error) {
+                console.log('Tile prefetch completed with some errors');
+            }
+        }
+
+        function getTileCoordinates(lat, lon, zoom) {
+            const n = Math.pow(2, zoom);
+            const x = Math.floor((lon + 180) / 360 * n);
+            const latRad = lat * Math.PI / 180;
+            const y = Math.floor((1 - Math.asinh(Math.tan(latRad)) / Math.PI) / 2 * n);
+            return { x, y };
+        }
+
+        // Smooth coordinate navigation with prefetching
+        document.getElementById('coordSearch').addEventListener('keypress', async function(e) {
+            if (e.key === 'Enter' && !isNavigating) {
+                const coords = this.value.split(',').map(s => parseFloat(s.trim()));
+                if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+                    isNavigating = true;
+                    const targetZoom = 7;
+                    
+                    showStatus('⏳ Loading high-resolution tiles...', 'success');
+                    
+                    // Prefetch tiles first
+                    await prefetchTiles(coords[0], coords[1], targetZoom);
+                    
+                    // Then smoothly fly to location
+                    showStatus('✈️ Navigating to coordinates...', 'success');
+                    
+                    map.flyTo([coords[0], coords[1]], targetZoom, {
+                        duration: 3.5,
+                        easeLinearity: 0.15
+                    });
+                    
+                    setTimeout(() => {
+                        const marker = L.circleMarker([coords[0], coords[1]], {
+                            radius: 10,
+                            fillColor: '#667eea',
+                            color: 'white',
+                            weight: 3,
+                            opacity: 1,
+                            fillOpacity: 0.9
+                        }).addTo(searchMarkersLayer);
+                        
+                        marker.bindPopup(`
+                            <div style="text-align: center;">
+                                <b>📍 Search Location</b><br>
+                                <div style="font-family: 'Courier New', monospace; font-size: 12px; margin-top: 6px; color: rgba(255,255,255,0.8);">
+                                    Lat: ${coords[0].toFixed(4)}°<br>
+                                    Lon: ${coords[1].toFixed(4)}°
+                                </div>
+                            </div>
+                        `).openPopup();
+                        
+                        document.getElementById('clearBtn').style.display = 'flex';
+                        showStatus('✅ Arrived at destination!', 'success');
+                        isNavigating = false;
+                    }, 3500);
+                    
+                    this.value = '';
+                } else {
+                    showStatus('❌ Invalid coordinates format', 'error');
+                }
+            }
         });
 
-        tileLayer.on('tileload', function(e) {
-            console.log('✅ Tile loaded:', `${e.coords.z}/${e.coords.x}/${e.coords.y}`);
+        // Forum Button
+        document.getElementById('forumBtn').addEventListener('click', function() {
+            if (isDrawingQuestion) {
+                cancelCurrentDrawing();
+                return;
+            }
+            
+            cancelCurrentDrawing();
+            isDrawingQuestion = true;
+            this.classList.add('active');
+            document.getElementById('cancelDrawBtn').classList.add('show');
+            showStatus('🎨 Draw an area for your question. Press ESC or click × to cancel', 'success');
+            
+            currentDrawHandler = new L.Draw.Polygon(map, {
+                shapeOptions: {
+                    color: selectedColor,
+                    weight: 3,
+                    fillOpacity: 0.3
+                },
+                allowIntersection: false,
+                showArea: true,
+                metric: true,
+                repeatMode: false
+            });
+            currentDrawHandler.enable();
         });
 
-        // Log initial state
-        console.log('🚀 Mars Map Viewer initialized');
-        console.log('Starting at zoom', map.getZoom(), 'centered at', map.getCenter());
+        // Measure Button
+        document.getElementById('measureBtn').addEventListener('click', function() {
+            if (isMeasuring) {
+                cancelCurrentDrawing();
+                return;
+            }
+            
+            cancelCurrentDrawing();
+            isMeasuring = true;
+            this.classList.add('active');
+            this.innerHTML = '<span>📏</span><span>Drawing...</span>';
+            document.getElementById('cancelDrawBtn').classList.add('show');
+            showStatus('📏 Click points to measure distance. Double-click to finish. Press ESC or × to cancel', 'success');
+            
+            currentDrawHandler = new L.Draw.Polyline(map, {
+                shapeOptions: {
+                    color: '#30cfd0',
+                    weight: 4,
+                    opacity: 0.8
+                },
+                metric: true,
+                feet: false,
+                repeatMode: false
+            });
+            currentDrawHandler.enable();
+        });
+
+        // Label Button
+        document.getElementById('labelBtn').addEventListener('click', function() {
+            if (isDrawingLabel) {
+                cancelCurrentDrawing();
+                return;
+            }
+            
+            cancelCurrentDrawing();
+            isDrawingLabel = true;
+            this.classList.add('active');
+            document.getElementById('cancelDrawBtn').classList.add('show');
+            showStatus('🏷️ Draw an area to label. Press ESC or × to cancel', 'success');
+            
+            currentDrawHandler = new L.Draw.Polygon(map, {
+                shapeOptions: {
+                    color: selectedLabelColor,
+                    weight: 3,
+                    fillOpacity: 0.2,
+                    dashArray: '10, 10'
+                },
+                allowIntersection: false,
+                showArea: true,
+                metric: true,
+                repeatMode: false
+            });
+            currentDrawHandler.enable();
+        });
+
+        // ESC key to cancel
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                cancelCurrentDrawing();
+            }
+        });
+
+        // Color Picker for Questions
+        document.querySelectorAll('.color-option[data-color]').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.color-option[data-color]').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedColor = this.dataset.color;
+            });
+        });
+
+        // Color Picker for Labels
+        document.querySelectorAll('.color-option[data-color-label]').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.color-option[data-color-label]').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedLabelColor = this.dataset.colorLabel;
+            });
+        });
+
+        // Drawing Events
+        map.on(L.Draw.Event.CREATED, function(e) {
+            const layer = e.layer;
+            
+            if (isDrawingQuestion) {
+                currentShape = layer;
+                document.getElementById('forumModal').classList.add('show');
+                document.getElementById('cancelDrawBtn').classList.remove('show');
+            } else if (isDrawingLabel) {
+                currentShape = layer;
+                document.getElementById('labelModal').classList.add('show');
+                document.getElementById('cancelDrawBtn').classList.remove('show');
+            } else if (isMeasuring) {
+                measureLine = layer;
+                const latlngs = layer.getLatLngs();
+                const distance = calculateDistance(latlngs);
+                
+                layer.bindPopup(`<b>Distance</b><br>${distance.toFixed(2)} km`);
+                map.addLayer(layer);
+                
+                document.getElementById('distanceValue').textContent = distance.toFixed(2) + ' km';
+                document.getElementById('distanceDisplay').classList.add('show');
+                document.getElementById('cancelDrawBtn').classList.remove('show');
+                
+                isMeasuring = false;
+                document.getElementById('measureBtn').classList.remove('active');
+                document.getElementById('measureBtn').innerHTML = '<span>📏</span><span>Measure</span>';
+            }
+        });
+
+        function calculateDistance(latlngs) {
+            const R = 3389.5;
+            let totalDistance = 0;
+            
+            for (let i = 0; i < latlngs.length - 1; i++) {
+                const lat1 = latlngs[i].lat * Math.PI / 180;
+                const lat2 = latlngs[i + 1].lat * Math.PI / 180;
+                const dLat = (latlngs[i + 1].lat - latlngs[i].lat) * Math.PI / 180;
+                const dLon = (latlngs[i + 1].lng - latlngs[i].lng) * Math.PI / 180;
+                
+                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                         Math.cos(lat1) * Math.cos(lat2) *
+                         Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                totalDistance += R * c;
+            }
+            
+            return totalDistance;
+        }
+
+        function createQuestionPopup(questionData) {
+            const answersHtml = questionData.answers.map(a => 
+                `<div class="answer">💬 ${a}</div>`
+            ).join('');
+            
+            return `
+                <div class="question-header">
+                    <div class="question-icon" style="background: ${questionData.color};">❓</div>
+                    <div style="flex: 1;">
+                        <div class="question-text">${questionData.question}</div>
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.5);">
+                            ${new Date(questionData.timestamp).toLocaleString()}
+                        </div>
+                    </div>
+                </div>
+                ${answersHtml ? `<div class="answer-section"><div style="max-height: 150px; overflow-y: auto;">${answersHtml}</div></div>` : ''}
+                <div class="answer-section">
+                    <button class="answer-btn" onclick="expandQuestion(${questionData.id})" style="width: 100%;">📖 View Full Details & Answer</button>
+                </div>
+            `;
+        }
+
+        window.expandQuestion = function(questionId) {
+            const q = questions[questionId];
+            if (!q) return;
+            
+            currentExpandedQuestion = questionId;
+            
+            const answersHtml = q.answers.length > 0 ? 
+                q.answers.map((a, i) => `
+                    <div class="answer-item">
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 8px;">Answer ${i + 1}</div>
+                        <div class="answer-item-text">${a}</div>
+                    </div>
+                `).join('') : 
+                '<p style="color: rgba(255,255,255,0.5); text-align: center; padding: 20px;">No answers yet. Be the first to answer!</p>';
+            
+            document.getElementById('panelContent').innerHTML = `
+                <div class="question-detail">
+                    <h3><span style="background: ${q.color}; width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;">❓</span> Question</h3>
+                    <div class="question-meta">Posted on ${new Date(q.timestamp).toLocaleString()}</div>
+                    <p style="color: white; font-size: 16px; line-height: 1.6;">${q.question}</p>
+                    
+                    <div class="divider" style="margin: 25px 0;"></div>
+                    
+                    <h3 style="margin-bottom: 15px;">💬 Answers (${q.answers.length})</h3>
+                    <div class="answers-list">
+                        ${answersHtml}
+                    </div>
+                    
+                    <div class="answer-form">
+                        <label style="color: rgba(255,255,255,0.8); font-size: 13px; display: block; margin-bottom: 8px; font-weight: 600;">Add Your Answer</label>
+                        <textarea id="expandedAnswerInput" placeholder="Share your knowledge..."></textarea>
+                        <button class="modal-btn primary" onclick="submitExpandedAnswer()">Submit Answer</button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('questionPanel').classList.add('open');
+        };
+
+        window.submitExpandedAnswer = function() {
+            const input = document.getElementById('expandedAnswerInput');
+            const answer = input.value.trim();
+            
+            if (!answer) {
+                showStatus('❌ Please enter an answer', 'error');
+                return;
+            }
+            
+            if (questions[currentExpandedQuestion]) {
+                questions[currentExpandedQuestion].answers.push(answer);
+                
+                const layer = questions[currentExpandedQuestion].layer;
+                layer.setPopupContent(createQuestionPopup(questions[currentExpandedQuestion]));
+                
+                expandQuestion(currentExpandedQuestion);
+                showStatus('✅ Answer submitted!', 'success');
+            }
+        };
+
+        // Submit Question
+        document.getElementById('submitQuestion').addEventListener('click', async function() {
+            const question = document.getElementById('questionInput').value.trim();
+            
+            if (!question) {
+                showStatus('❌ Please enter a question', 'error');
+                return;
+            }
+            
+            currentShape.setStyle({
+                color: selectedColor,
+                fillColor: selectedColor,
+                fillOpacity: 0.3,
+                weight: 3
+            });
+            
+            const questionId = Date.now();
+            const questionData = {
+                id: questionId,
+                question: question,
+                color: selectedColor,
+                coordinates: currentShape.getLatLngs()[0].map(ll => [ll.lat, ll.lng]),
+                answers: [],
+                timestamp: new Date().toISOString(),
+                layer: currentShape
+            };
+            
+            questions[questionId] = questionData;
+            questionCount++;
+            document.getElementById('questionCount').textContent = questionCount;
+            
+            const popupContent = createQuestionPopup(questionData);
+            currentShape.bindPopup(popupContent, { maxWidth: 350, className: 'question-popup' });
+            questionLayer.addLayer(currentShape);
+            
+            try {
+                await fetch(`${API_BASE_URL}/api/questions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(questionData)
+                });
+            } catch (error) {
+                console.log('Backend save failed, keeping locally');
+            }
+            
+            document.getElementById('forumModal').classList.remove('show');
+            document.getElementById('questionInput').value = '';
+            currentShape = null;
+            isDrawingQuestion = false;
+            document.getElementById('forumBtn').classList.remove('active');
+            
+            showStatus('✅ Question posted successfully!', 'success');
+        });
+
+        // Cancel Question
+        document.getElementById('cancelQuestion').addEventListener('click', function() {
+            document.getElementById('forumModal').classList.remove('show');
+            document.getElementById('questionInput').value = '';
+            currentShape = null;
+            isDrawingQuestion = false;
+            document.getElementById('forumBtn').classList.remove('active');
+        });
+
+        // Submit Label
+        document.getElementById('submitLabel').addEventListener('click', function() {
+            const labelText = document.getElementById('labelInput').value.trim();
+            
+            if (!labelText) {
+                showStatus('❌ Please enter a label', 'error');
+                return;
+            }
+            
+            currentShape.setStyle({
+                color: selectedLabelColor,
+                fillColor: selectedLabelColor,
+                fillOpacity: 0.2,
+                weight: 3,
+                dashArray: '10, 10'
+            });
+            
+            const center = currentShape.getBounds().getCenter();
+            const labelMarker = L.marker(center, {
+                icon: L.divIcon({
+                    className: 'label-icon',
+                    html: `<div style="background: ${selectedLabelColor}; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 2px solid white;">🏷️ ${labelText}</div>`,
+                    iconSize: null
+                })
+            });
+            
+            currentShape.bindPopup(`<b>📍 ${labelText}</b><br><div style="font-size: 11px; color: rgba(255,255,255,0.6);">Area Label</div>`);
+            labelLayer.addLayer(currentShape);
+            labelLayer.addLayer(labelMarker);
+            
+            document.getElementById('labelModal').classList.remove('show');
+            document.getElementById('labelInput').value = '';
+            currentShape = null;
+            isDrawingLabel = false;
+            document.getElementById('labelBtn').classList.remove('active');
+            
+            showStatus('✅ Label added successfully!', 'success');
+        });
+
+        // Cancel Label
+        document.getElementById('cancelLabel').addEventListener('click', function() {
+            document.getElementById('labelModal').classList.remove('show');
+            document.getElementById('labelInput').value = '';
+            currentShape = null;
+            isDrawingLabel = false;
+            document.getElementById('labelBtn').classList.remove('active');
+        });
+
+        // Click outside modal to close
+        document.getElementById('forumModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('show');
+                document.getElementById('questionInput').value = '';
+                currentShape = null;
+                isDrawingQuestion = false;
+                document.getElementById('forumBtn').classList.remove('active');
+            }
+        });
+
+        document.getElementById('labelModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('show');
+                document.getElementById('labelInput').value = '';
+                currentShape = null;
+                isDrawingLabel = false;
+                document.getElementById('labelBtn').classList.remove('active');
+            }
+        });
+
+        async function loadQuestions() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/questions`);
+                const loadedQuestions = await response.json();
+                
+                loadedQuestions.forEach(q => {
+                    const coords = q.coordinates.map(c => [c[0], c[1]]);
+                    const polygon = L.polygon(coords, {
+                        color: q.color,
+                        fillColor: q.color,
+                        fillOpacity: 0.3,
+                        weight: 3
+                    });
+                    
+                    q.layer = polygon;
+                    questions[q.id] = q;
+                    
+                    polygon.bindPopup(createQuestionPopup(q), { 
+                        maxWidth: 350, 
+                        className: 'question-popup' 
+                    });
+                    questionLayer.addLayer(polygon);
+                    questionCount++;
+                });
+                
+                document.getElementById('questionCount').textContent = questionCount;
+            } catch (error) {
+                console.log('Could not load questions from backend');
+            }
+        }
+
+        loadQuestions();
     </script>
 </body>
 </html>
