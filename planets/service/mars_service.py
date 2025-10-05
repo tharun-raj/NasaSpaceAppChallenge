@@ -2,7 +2,6 @@ import os
 
 NASA_TITLE_URL = {
     "global": "https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/default/default028mm/{z}/{y}/{x}.jpg", 
-    "THEMIS-IR-Night" : "https://api.nasa.gov/mars-wmts/catalog/Mars_MO_THEMIS-IR-Night_mosaic_60N60S_100m_v14_clon0_ly/1.0.0/default/default028mm/{z}/{y}/{x}.jpg?api_key=RET9eF0feT0eU6yZOpfMSGiDr1qQqtRJlUMRroic",
     "moon": "https://trek.nasa.gov/tiles/Moon/EQ/LRO_WAC_Mosaic_Global_303ppd_v02/1.0.0//default/default028mm/{z}/{y}/{x}.jpg",
     "mercury": "https://trek.nasa.gov/tiles/Mercury/EQ/Mercury_MESSENGER_MDIS_Basemap_BDR_Mosaic_Global_166m/1.0.0//default/default028mm/{z}/{y}/{x}.jpg"
 }
