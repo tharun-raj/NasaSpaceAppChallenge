@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query, Path
 from pydantic import BaseModel
 from typing import Optional, List
-from .db import insert_coordinates,get_coordinates,delete_coordinates,update_coordinates
+from db import insert_coordinates,get_coordinates,delete_coordinates,update_coordinates
 
 router = APIRouter()
 
