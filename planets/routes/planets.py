@@ -8,10 +8,7 @@ import os
 from planets.cache.tile_cache import (
     cache_tile_data, 
     get_cached_tile_data, 
-    smart_prefetch_neighbors,
     get_neighboring_tiles,
-    get_cache_stats,
-    clear_cache
 )
 from planets.service.mars_service import get_nasa_tile_url
 from service.image_service import fetch_data_from_url
