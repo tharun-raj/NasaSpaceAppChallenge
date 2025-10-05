@@ -22,15 +22,11 @@ redis==4.5.5
 google-generativeai==0.1.0
 
 # Image Processing
-Pillow==9.2.0
+Pillow
 
 # Environment Management
 python-dotenv==1.0.0
 
 # Data Validation
-pydantic==2.6.1
+pydantic
 
-# Other utility libraries
-aioredis==2.0.0  # Optional if you need async Redis
-aiohttp==3.8.1  # Optional for async HTTP requests
-fastapi-utils==0.2.1  # Optional for extended FastAPI utilities
